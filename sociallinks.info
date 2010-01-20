@@ -1,0 +1,6 @@
+; $Id$
+name = Social Links
+description = Add a customizable block with multiple tabs to share your social links. (Facebook, Twitter, Simplenews, et. al.)
+core = 6.x
+dependencies[] = jquery_ui
+

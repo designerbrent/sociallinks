@@ -1,0 +1,91 @@
+<?php
+// $Id$
+
+/**
+ * @file
+ * This module provides a block and a settings page to display a collection
+ * of social media links like Facebook, Twitter, Simplenews subscription, etc.
+ */
+
+/**
+ * Implementation of hook_block().
+ *
+ * This hook both declares to Drupal what blocks are provided by the module, and
+ * generates the contents of the blocks themselves.
+ */
+function sociallinks_block($op = 'list', $delta = 0, $edit = array()) {
+  switch ($op) {
+    case 'list':
+      $blocks[0] = array(
+        'info' => t('Social Links Block'),
+        'weight' => -10,
+        );
+      return $blocks;
+    case 'configure':
+      $form = array();
+      
+      if ($delta == 0) {
+        $form['sociallinks_email'] = array(
+          '#type' => 'fieldset',
+          '#title' => 'Email Settings',
+          );
+        $form['sociallinks_email']['sociallinks_email_title'] = array(
+          '#type' => 'textfield',
+          '#title' => t('Email Title'),
+          '#size' => 60,
+          '#description' => t('Enter the name for the Email Tab'),
+          '#default_value' => variable_get('sociallinks_email_title', t('Email')),
+          );
+        $form['sociallinks_email']['sociallinks_email_message'] = array(
+          '#type' => 'textarea',
+          '#title' => t('Email Intro Message'),
+          '#size' => 60,
+          '#description' => t('Enter any description information about your newsletter.'),
+          '#default_value' => variable_get('sociallinks_email_message'),
+          );      }
+      return $form;
+    case 'save':
+      if ($delta == 0) {
+        variable_set('sociallinks_email_title', $edit['sociallinks_email_title']);
+      }
+      break;
+    case 'view': default:
+      switch ($delta) {
+        case 0:
+          $block['subject'] = t('Social Links');
+          $block['content'] = theme('sociallinks_block');
+          break;
+      }
+      return $block;
+  }
+}
+
+
+/**
+ * Build the contents of the block with this function.
+ */
+function sociallinks_contents($which_block) {
+  switch ($which_block) {
+    case 0:
+      return variable_get('sociallinks_email_title', t('Email'));
+  }
+}
+
+/**
+ * Implementation of hook_theme().
+ */
+function sociallinks_theme() {
+  $items = array();
+  $items['sociallinks_block'] = array(
+    'arguments' => array('key' => 'value'),
+    'template' => 'sociallinks-block',
+  );
+  return $items;
+}
+
+function template_preprocess_sociallinks_block(&$vars) {
+  jquery_ui_add('ui.tabs');
+  drupal_add_js(drupal_get_path('module', 'sociallinks') .'/sociallinks.js');
+  drupal_add_css(drupal_get_path('module', 'sociallinks') .'/sociallinks.css');
+
+}
