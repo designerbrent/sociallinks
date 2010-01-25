@@ -1,14 +1,14 @@
 /* @override http://drupal6/sites/all/modules/custom/sociallinks/sociallinks.css?f */
 
-#sociallinks_tabs .ui-tabs-hide {
+#sociallinks .ui-tabs-hide {
   display: none;
 }
 
-#sociallinks_tabs {
+#sociallinks {
   height: 170px;
 }
 
-ul.sl_tabs {
+ul.sociallinks-tabs {
   width: 110px;
   background-color: lavender;
   list-style-position: inside;
@@ -20,7 +20,7 @@ ul.sl_tabs {
   height: 140px;
 }
 
-ul.sl_tabs.ui-tabs-nav {
+ul.sociallinks-tabs.ui-tabs-nav {
   margin: 0;
 }
 
@@ -28,13 +28,19 @@ li.ui-tabs-selected {
   background-color: red;
 }
 
-ul.sl_tabs li {
+ul.sociallinks-tabs li {
   list-style-image: none;
   list-style-type: none;
+  background-image: none;
+  margin: 0;
+  padding: 0;
+}
+ul.sociallinks-tabs li a {
   padding: 5px;
+  display: block;
 }
 
-div.sl_fragment {
+div.sociallinks-content {
   padding-right: 0;
   overflow: auto;
   height: 180px;

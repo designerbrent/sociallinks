@@ -1,0 +1,9 @@
+<?php
+// $Id$
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function sociallinks_uninstall() {
+  variable_del('sociallinks_global_tab_settings');
+}

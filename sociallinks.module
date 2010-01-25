@@ -7,67 +7,90 @@
  * of social media links like Facebook, Twitter, Simplenews subscription, etc.
  */
 
+/*******************************************************************************
+ * Hook Functions (Drupal)
+ ******************************************************************************/
+
 /**
  * Implementation of hook_block().
- *
- * This hook both declares to Drupal what blocks are provided by the module, and
- * generates the contents of the blocks themselves.
  */
 function sociallinks_block($op = 'list', $delta = 0, $edit = array()) {
   switch ($op) {
     case 'list':
       $blocks[0] = array(
-        'info' => t('Social Links Block'),
-        'weight' => -10,
-        );
+        'info' => t('Social links'),
+        'weight' => -10
+      );
       return $blocks;
     case 'configure':
-      $form = array();
-      
       if ($delta == 0) {
-        $form['sociallinks_email'] = array(
-          '#type' => 'fieldset',
-          '#title' => 'Email Settings',
+        sociallinks_include_files();
+        $tabs = sociallinks_fetch_tabs();
+        $form['sociallinks_tabs'] = array('#tree' => TRUE);
+        foreach ($tabs as $id => $tab) {
+          $form['sociallinks_tabs'][$id] = array(
+            '#type' => 'fieldset',
+            '#title' => $tab['title'] .' tab settings',
+            '#collapsible' => TRUE,
+            '#collapsed' => TRUE
           );
-        $form['sociallinks_email']['sociallinks_email_title'] = array(
-          '#type' => 'textfield',
-          '#title' => t('Email Title'),
-          '#size' => 60,
-          '#description' => t('Enter the name for the Email Tab'),
-          '#default_value' => variable_get('sociallinks_email_title', t('Email')),
+          $form['sociallinks_tabs'][$id]['enabled'] = array(
+            '#type' => 'checkbox',
+            '#title' => t('Enabled'),
+            '#default_value' => $tab['settings']['enabled']
           );
-        $form['sociallinks_email']['sociallinks_email_message'] = array(
-          '#type' => 'textarea',
-          '#title' => t('Email Intro Message'),
-          '#size' => 60,
-          '#description' => t('Enter any description information about your newsletter.'),
-          '#default_value' => variable_get('sociallinks_email_message'),
-          );      }
-      return $form;
+          $form['sociallinks_tabs'][$id]['title'] = array(
+            '#type' => 'textfield',
+            '#title' => t('Title'),
+            '#size' => 60,
+            '#description' => t('Override the default title for the tab. Leave blank to use the default tab title.'),
+            '#default_value' => $tab['settings']['title']
+          );
+          $form['sociallinks_tabs'][$id]['message'] = array(
+            '#type' => 'textarea',
+            '#title' => t('Message'),
+            '#size' => 60,
+            '#description' => t('Enter a message to be displayed in the content of the tab.'),
+            '#default_value' => $tab['settings']['message']
+          );
+          $form['sociallinks_tabs'][$id]['weight'] = array(
+            '#type' => 'weight',
+            '#delta' => 10,
+            '#default_value' => $tab['settings']['weight']
+          );
+          if (isset($tab['configure callback'])) {
+            $function = $tab['configure callback'];
+            $form['sociallinks_tabs'][$id] += $function();
+          }
+        }
+        return $form;
+      }
     case 'save':
       if ($delta == 0) {
-        variable_set('sociallinks_email_title', $edit['sociallinks_email_title']);
+        $settings = array();
+        sociallinks_include_files();
+        $tabs = sociallinks_fetch_tabs();
+        foreach ($edit['sociallinks_tabs'] as $id => $tab) {
+          $settings[$id]['enabled'] = $tab['enabled'];
+          $settings[$id]['title'] = $tab['title'];
+          $settings[$id]['message'] = $tab['message'];
+          $settings[$id]['weight'] = $tab['weight'];
+          if (isset($tabs[$id]['save callback'])) {
+            $function = $tabs[$id]['save callback'];
+            $function($edit['sociallinks_tabs'][$id]);
+          }
+        }
+        variable_set('sociallinks_global_tab_settings', $settings);
+        cache_clear_all('sociallinks:tabs', 'cache');
       }
       break;
     case 'view': default:
       switch ($delta) {
         case 0:
-          $block['subject'] = t('Social Links');
+          $block['subject'] = t('Social links');
           $block['content'] = theme('sociallinks_block');
-          break;
+          return $block;
       }
-      return $block;
-  }
-}
-
-
-/**
- * Build the contents of the block with this function.
- */
-function sociallinks_contents($which_block) {
-  switch ($which_block) {
-    case 0:
-      return variable_get('sociallinks_email_title', t('Email'));
   }
 }
 
@@ -75,17 +98,205 @@ function sociallinks_contents($which_block) {
  * Implementation of hook_theme().
  */
 function sociallinks_theme() {
-  $items = array();
-  $items['sociallinks_block'] = array(
-    'arguments' => array('key' => 'value'),
-    'template' => 'sociallinks-block',
+  return array(
+    'sociallinks_block' => array(
+      'arguments' => array('tabs' => '', 'content' => ''),
+      'template' => 'sociallinks-block',
+    ),
+    'sociallinks_tab' => array(
+      'arguments' => array('tab' => NULL)
+    ),
+    'sociallinks_content' => array(
+      'arguments' => array('tab' => NULL, 'output' => NULL)
+    )
   );
-  return $items;
 }
+
+/*******************************************************************************
+ * Hook Functions (Social Links)
+ ******************************************************************************/
+
+function sociallinks_sociallinks_tabs() {
+  return array(
+    'email' => array(
+      'title' => 'Email',
+      'file' => 'sociallinks.tabs.inc',
+      'content callback' => 'sociallinks_email_content',
+      'settings' => array('enabled' => TRUE)
+    ),
+    'facebook' => array(
+      'title' => 'Facebook',
+      'file' => 'sociallinks.tabs.inc'
+    ),
+    'twitter' => array(
+      'title' => 'Twitter',
+      'file' => 'sociallinks.tabs.inc'
+    )
+  );
+}
+
+/*******************************************************************************
+ * Callback Functions, Forms, and Tables
+ ******************************************************************************/
+
+
+
+/*******************************************************************************
+ * Module and Helper Functions
+ ******************************************************************************/
+
+function sociallinks_fetch_tabs($enabled = FALSE) {
+  static $tabs = array();
+
+  if (empty($tabs)) {
+    $cache = cache_get('sociallinks:tabs');
+    if (!empty($cache->data)) {
+      $tabs = $cache->data;
+    }
+
+    if (empty($tabs)) {
+      foreach (module_implements('sociallinks_tabs') as $module) {
+        $function = $module .'_sociallinks_tabs';
+        $module_tabs = $function();
+
+        // Add defaults if needed.
+        foreach ($module_tabs as $id => $tab) {
+          $module_tabs[$id]['module'] = $module;
+          $module_tabs[$id]['id'] = $id;
+          if (!isset($tab['settings']['enabled'])) {
+            $module_tabs[$id]['settings']['enabled'] = FALSE;
+          }
+          if (!isset($tab['settings']['title'])) {
+            $module_tabs[$id]['settings']['title'] = '';
+          }
+          if (!isset($tab['settings']['message'])) {
+            $module_tabs[$id]['settings']['message'] = '';
+          }
+          if (!isset($tab['settings']['weight'])) {
+            $module_tabs[$id]['settings']['weight'] = 0;
+          }
+          if (isset($tab['file']) && !isset($tab['file path'])) {
+            $module_tabs[$id]['file path'] = drupal_get_path('module', $module);
+          }
+        }
+
+        $tabs += $module_tabs;
+      }
+
+      drupal_alter('sociallinks_tabs_alter', $tabs);
+
+      // Apply settings
+      $settings = variable_get('sociallinks_global_tab_settings', array());
+      foreach ($settings as $id => $tab) {
+        $tabs[$id]['settings'] = array_merge($tabs[$id]['settings'], $tab);
+      }
+
+      cache_set('sociallinks:tabs', $tabs);
+    }
+  }
+
+  uasort($tabs, "sociallinks_tab_sort");
+
+  if ($enabled) {
+    $enabled_tabs = array();
+    foreach ($tabs as $tab) {
+      if ($tab['settings']['enabled']) {
+        $enabled_tabs[] = $tab;
+      }
+    }
+    return $enabled_tabs;
+  }
+
+  return $tabs;
+}
+
+function sociallinks_include_files($include_tabs = array()) {
+  $tabs = sociallinks_fetch_tabs();
+
+  if (empty($include_tabs)) {
+    $include_tabs = array_keys($tabs);
+  }
+
+  foreach ($include_tabs as $id) {
+    if (!isset($included[$id]) && isset($tabs[$id]['file'])) {
+      sociallinks_include_file($tabs[$id]['file'], $tabs[$id]['file path']);
+    }
+  }
+}
+
+function sociallinks_include_file($file, $path) {
+  static $included = array();
+
+  if (!isset($included[$path .'/'. $file])) {
+    if (isset($file)) {
+      require_once './' . $path .'/'. $file;
+    }
+    $included[$id] = TRUE;
+  }
+}
+
+function sociallinks_get_tabs() {
+  $tabs = array();
+  foreach (sociallinks_fetch_tabs(TRUE) as $tab) {
+    $tabs[] = array(
+      '#value' => theme('sociallinks_tab', $tab),
+      '#weight' => $tab['settings']['weight']
+    );
+  }
+  return $tabs;
+}
+
+function sociallinks_get_content() {
+  $content = array();
+  foreach (sociallinks_fetch_tabs(TRUE) as $tab) {
+    $output = '';
+    if (isset($tab['content callback'])) {
+      if (isset($tab['file'])) {
+        sociallinks_include_file($tab['file'], $tab['file path']);
+      }
+      $function = $tab['content callback'];
+      $output = $function();
+    }
+    $content[] = array(
+      '#value' => theme('sociallinks_content', $tab, $output),
+      '#weight' => $tab['settings']['weight']
+    );
+  }
+  return $content;
+}
+
+function sociallinks_tab_sort($a, $b) {
+  $a_weight = $a['settings']['weight'];
+  $b_weight = $b['settings']['weight'];
+  if ($a_weight == $b_weight) {
+    $a_title = (!empty($a['settings']['title'])) ? $a['settings']['title'] : $a['title'];
+    $b_title = (!empty($b['settings']['title'])) ? $b['settings']['title'] : $b['title'];
+    if ($a_title == $b_title) {
+      return 0;
+    }
+    return strcmp($a_title, $b_title);
+  }
+  return ($a_weight < $b_weight) ? -1 : 1;
+}
+
+/*******************************************************************************
+ * Theme Functions
+ ******************************************************************************/
 
 function template_preprocess_sociallinks_block(&$vars) {
   jquery_ui_add('ui.tabs');
   drupal_add_js(drupal_get_path('module', 'sociallinks') .'/sociallinks.js');
   drupal_add_css(drupal_get_path('module', 'sociallinks') .'/sociallinks.css');
 
+  $vars['tabs'] = sociallinks_get_tabs();
+  $vars['content'] = sociallinks_get_content();
+}
+
+function theme_sociallinks_tab($tab) {
+  $title = (!empty($tab['settings']['title'])) ? $tab['settings']['title'] : $tab['title'];
+  return '<li><a href="#sociallinks-tab-'. str_replace('_', '-', $tab['id']) .'"><span>'. $title .'</span></a></li>';
+}
+
+function theme_sociallinks_content($tab, $output) {
+  return '<div id="sociallinks-tab-'. str_replace('_', '-', $tab['id']) .'" class="sociallinks-content">'. $output .'</div>';
 }
