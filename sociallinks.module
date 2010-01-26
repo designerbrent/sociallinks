@@ -12,6 +12,13 @@
  ******************************************************************************/
 
 /**
+ * Implementation of hook_perm().
+ */
+function sociallinks_perm() {
+  return array('access social links');
+}
+
+/**
  * Implementation of hook_block().
  */
 function sociallinks_block($op = 'list', $delta = 0, $edit = array()) {
@@ -25,7 +32,7 @@ function sociallinks_block($op = 'list', $delta = 0, $edit = array()) {
     case 'configure':
       if ($delta == 0) {
         sociallinks_include_files();
-        $tabs = sociallinks_fetch_tabs();
+        $tabs = sociallinks_fetch_tabs(FALSE, TRUE);
         $form['sociallinks_tabs'] = array('#tree' => TRUE);
         foreach ($tabs as $id => $tab) {
           $form['sociallinks_tabs'][$id] = array(
@@ -42,21 +49,22 @@ function sociallinks_block($op = 'list', $delta = 0, $edit = array()) {
           $form['sociallinks_tabs'][$id]['title'] = array(
             '#type' => 'textfield',
             '#title' => t('Title'),
-            '#size' => 60,
             '#description' => t('Override the default title for the tab. Leave blank to use the default tab title.'),
             '#default_value' => $tab['settings']['title']
           );
           $form['sociallinks_tabs'][$id]['message'] = array(
             '#type' => 'textarea',
             '#title' => t('Message'),
-            '#size' => 60,
             '#description' => t('Enter a message to be displayed in the content of the tab.'),
-            '#default_value' => $tab['settings']['message']
+            '#default_value' => $tab['settings']['message'],
+            '#rows' => 10
           );
           $form['sociallinks_tabs'][$id]['weight'] = array(
             '#type' => 'weight',
+            '#title' => t('Weight'),
             '#delta' => 10,
-            '#default_value' => $tab['settings']['weight']
+            '#default_value' => $tab['settings']['weight'],
+            '#weight' => 10
           );
           if (isset($tab['configure callback'])) {
             $function = $tab['configure callback'];
@@ -69,16 +77,16 @@ function sociallinks_block($op = 'list', $delta = 0, $edit = array()) {
       if ($delta == 0) {
         $settings = array();
         sociallinks_include_files();
-        $tabs = sociallinks_fetch_tabs();
+        $tabs = sociallinks_fetch_tabs(FALSE, TRUE);
         foreach ($edit['sociallinks_tabs'] as $id => $tab) {
-          $settings[$id]['enabled'] = $tab['enabled'];
+          if (isset($tabs[$id]['save callback'])) {
+            $function = $tabs[$id]['save callback'];
+            $enabled = $function($edit['sociallinks_tabs'][$id]);
+          }
+          $settings[$id]['enabled'] = ($enabled !== FALSE) ? $tab['enabled'] : FALSE;
           $settings[$id]['title'] = $tab['title'];
           $settings[$id]['message'] = $tab['message'];
           $settings[$id]['weight'] = $tab['weight'];
-          if (isset($tabs[$id]['save callback'])) {
-            $function = $tabs[$id]['save callback'];
-            $function($edit['sociallinks_tabs'][$id]);
-          }
         }
         variable_set('sociallinks_global_tab_settings', $settings);
         cache_clear_all('sociallinks:tabs', 'cache');
@@ -87,9 +95,11 @@ function sociallinks_block($op = 'list', $delta = 0, $edit = array()) {
     case 'view': default:
       switch ($delta) {
         case 0:
-          $block['subject'] = t('Social links');
-          $block['content'] = theme('sociallinks_block');
-          return $block;
+          if (user_access('access social links')) {
+            $block['subject'] = t('Social links');
+            $block['content'] = theme('sociallinks_block');
+            return $block;
+          }
       }
   }
 }
@@ -118,19 +128,15 @@ function sociallinks_theme() {
 
 function sociallinks_sociallinks_tabs() {
   return array(
-    'email' => array(
-      'title' => 'Email',
-      'file' => 'sociallinks.tabs.inc',
-      'content callback' => 'sociallinks_email_content',
-      'settings' => array('enabled' => TRUE)
-    ),
     'facebook' => array(
       'title' => 'Facebook',
-      'file' => 'sociallinks.tabs.inc'
+      'file' => 'sociallinks.tabs.inc',
+      'configure callback' => 'sociallinks_facebook_configure'
     ),
     'twitter' => array(
       'title' => 'Twitter',
-      'file' => 'sociallinks.tabs.inc'
+      'file' => 'sociallinks.tabs.inc',
+      'configure callback' => 'sociallinks_twitter_configure'
     )
   );
 }
@@ -145,13 +151,19 @@ function sociallinks_sociallinks_tabs() {
  * Module and Helper Functions
  ******************************************************************************/
 
-function sociallinks_fetch_tabs($enabled = FALSE) {
+function sociallinks_fetch_tabs($enabled = FALSE, $rebuild = FALSE) {
   static $tabs = array();
 
+  if ($rebuild) {
+    $tabs = array();
+  }
+
   if (empty($tabs)) {
-    $cache = cache_get('sociallinks:tabs');
-    if (!empty($cache->data)) {
-      $tabs = $cache->data;
+    if (!$rebuild) {
+      $cache = cache_get('sociallinks:tabs');
+      if (!empty($cache->data)) {
+        $tabs = $cache->data;
+      }
     }
 
     if (empty($tabs)) {
@@ -178,6 +190,14 @@ function sociallinks_fetch_tabs($enabled = FALSE) {
           if (isset($tab['file']) && !isset($tab['file path'])) {
             $module_tabs[$id]['file path'] = drupal_get_path('module', $module);
           }
+          if (isset($tab['configure callback'])) {
+            if (!isset($tab['save callback'])) {
+              $module_tabs[$id]['save callback'] = $module .'_'. $id .'_save';
+            }
+            if (!isset($tab['content callback'])) {
+              $module_tabs[$id]['content callback'] = $module .'_'. $id .'_content';
+            }
+          }
         }
 
         $tabs += $module_tabs;
@@ -200,7 +220,7 @@ function sociallinks_fetch_tabs($enabled = FALSE) {
   if ($enabled) {
     $enabled_tabs = array();
     foreach ($tabs as $tab) {
-      if ($tab['settings']['enabled']) {
+      if ($tab['settings']['enabled'] && module_exists($tab['module'])) {
         $enabled_tabs[] = $tab;
       }
     }
@@ -228,7 +248,7 @@ function sociallinks_include_file($file, $path) {
   static $included = array();
 
   if (!isset($included[$path .'/'. $file])) {
-    if (isset($file)) {
+    if (isset($file) && file_exists('./'. $path .'/'. $file)) {
       require_once './' . $path .'/'. $file;
     }
     $included[$id] = TRUE;
@@ -249,13 +269,15 @@ function sociallinks_get_tabs() {
 function sociallinks_get_content() {
   $content = array();
   foreach (sociallinks_fetch_tabs(TRUE) as $tab) {
-    $output = '';
+    $output = $tab['settings']['message'];
     if (isset($tab['content callback'])) {
       if (isset($tab['file'])) {
         sociallinks_include_file($tab['file'], $tab['file path']);
       }
       $function = $tab['content callback'];
-      $output = $function();
+      if (function_exists($function)) {
+        $output .= $function();
+      }
     }
     $content[] = array(
       '#value' => theme('sociallinks_content', $tab, $output),
