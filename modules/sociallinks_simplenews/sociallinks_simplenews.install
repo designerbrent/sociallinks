@@ -1,0 +1,9 @@
+<?php
+// $Id$
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function sociallinks_simplenews_uninstall() {
+  cache_clear_all('sociallinks:tabs', 'cache');
+}

@@ -1,0 +1,8 @@
+; $Id$
+name = Simplenews Subscribe
+description = Tab for Social Links to subscribe to a Simplenews newsletter.
+core = 6.x
+dependencies[] = sociallinks
+dependencies[] = simplenews
+dependencies[] = ctools
+package = Social Links

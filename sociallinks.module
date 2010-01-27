@@ -239,12 +239,12 @@ function sociallinks_include_files($include_tabs = array()) {
 
   foreach ($include_tabs as $id) {
     if (!isset($included[$id]) && isset($tabs[$id]['file'])) {
-      sociallinks_include_file($tabs[$id]['file'], $tabs[$id]['file path']);
+      sociallinks_include($tabs[$id]['file'], $tabs[$id]['file path']);
     }
   }
 }
 
-function sociallinks_include_file($file, $path) {
+function sociallinks_include($file, $path) {
   static $included = array();
 
   if (!isset($included[$path .'/'. $file])) {
@@ -255,36 +255,29 @@ function sociallinks_include_file($file, $path) {
   }
 }
 
-function sociallinks_get_tabs() {
-  $tabs = array();
-  foreach (sociallinks_fetch_tabs(TRUE) as $tab) {
-    $tabs[] = array(
-      '#value' => theme('sociallinks_tab', $tab),
-      '#weight' => $tab['settings']['weight']
-    );
-  }
-  return $tabs;
-}
-
-function sociallinks_get_content() {
-  $content = array();
+function sociallinks_get_output() {
+  $tabs = $content = array();
   foreach (sociallinks_fetch_tabs(TRUE) as $tab) {
     $output = $tab['settings']['message'];
     if (isset($tab['content callback'])) {
       if (isset($tab['file'])) {
-        sociallinks_include_file($tab['file'], $tab['file path']);
+        sociallinks_include($tab['file'], $tab['file path']);
       }
       $function = $tab['content callback'];
       if (function_exists($function)) {
         $output .= $function();
       }
     }
+    $tabs[] = array(
+      '#value' => theme('sociallinks_tab', $tab),
+      '#weight' => $tab['settings']['weight']
+    );
     $content[] = array(
       '#value' => theme('sociallinks_content', $tab, $output),
       '#weight' => $tab['settings']['weight']
     );
   }
-  return $content;
+  return array($tabs, $content);
 }
 
 function sociallinks_tab_sort($a, $b) {
@@ -310,8 +303,7 @@ function template_preprocess_sociallinks_block(&$vars) {
   drupal_add_js(drupal_get_path('module', 'sociallinks') .'/sociallinks.js');
   drupal_add_css(drupal_get_path('module', 'sociallinks') .'/sociallinks.css');
 
-  $vars['tabs'] = sociallinks_get_tabs();
-  $vars['content'] = sociallinks_get_content();
+  list($vars['tabs'], $vars['content']) = sociallinks_get_output();
 }
 
 function theme_sociallinks_tab($tab) {

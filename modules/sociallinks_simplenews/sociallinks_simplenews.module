@@ -1,0 +1,36 @@
+<?php
+// $Id$
+
+/*******************************************************************************
+ * Hook Functions (Drupal)
+ ******************************************************************************/
+
+/**
+ * Implementation of hook_menu().
+ */
+function sociallinks_simplenews_menu() {
+  $items['sociallinks/%ctools_js/simplenews'] = array(
+    'page callback' => 'sociallinks_simplenews_ajax',
+    'page arguments' => array(1),
+    'access arguments' => array('access social links'),
+    'type' => MENU_CALLBACK,
+    'file' => 'sociallinks_simplenews.form.inc'
+  );
+  return $items;
+}
+
+/*******************************************************************************
+ * Hook Functions (Social Links)
+ ******************************************************************************/
+
+function sociallinks_simplenews_sociallinks_tabs() {
+  return array(
+    'simplenews' => array(
+      'title' => 'Simplenews',
+      'file' => 'sociallinks_simplenews.tabs.inc',
+      'configure callback' => 'sociallinks_simplenews_configure',
+      'save callback' => 'sociallinks_simplenews_save',
+      'content callback' => 'sociallinks_simplenews_content'
+    )
+  );
+}
