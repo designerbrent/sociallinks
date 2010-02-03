@@ -48,7 +48,7 @@ function sociallinks_block($op = 'list', $delta = 0, $edit = array()) {
           );
           $form['sociallinks_tabs'][$id]['title'] = array(
             '#type' => 'textfield',
-            '#title' => t('Title'),
+            '#title' => t('Tab Title'),
             '#description' => t('Override the default title for the tab. Leave blank to use the default tab title.'),
             '#default_value' => $tab['settings']['title']
           );

@@ -66,9 +66,9 @@ function sociallinks_simplenews_form($form_state) {
     }
     $form['mail'] = array(
       '#type' => 'textfield',
-      '#title' => t('E-mail'),
+      '#title' => t('Email'),
       '#default_value' => $user->mail,
-      '#size' => 20,
+      '#size' => 30,
       '#maxlength' => 128,
       '#required' => TRUE
     );
