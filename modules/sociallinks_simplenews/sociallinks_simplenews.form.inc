@@ -24,6 +24,7 @@ function sociallinks_simplenews_ajax($js) {
   }
 
   $commands = array();
+  $commands[] = ctools_ajax_command_remove("#sociallinks-tab-simplenews div.messages");
   $commands[] = ctools_ajax_command_replace('#sociallinks-simplenews-form', $output);
   ctools_ajax_render($commands);
 }
@@ -34,9 +35,11 @@ function sociallinks_simplenews_form($form_state) {
   drupal_add_js('misc/jquery.form.js', 'core');
   ctools_add_js('ajax-responder');
 
+  $ajax = !empty($form_state['ajax']);
+
   $form_state += array(
-    'rerender' => FALSE,
-    'no_redirect' => !empty($form_state['ajax'])
+    'rerender' => $ajax,
+    'no_redirect' => $ajax
   );
 
   $newsletters = variable_get('sociallinks_simplenews_newsletters', array());
@@ -55,10 +58,6 @@ function sociallinks_simplenews_form($form_state) {
       );
     }
     else {
-      $form['newsletter'] = array(
-        '#type' => 'item',
-        '#value' => current($options)
-      );
       $form['tids'] = array(
         '#type' => 'value',
         '#value' => array_keys($options)
@@ -76,9 +75,14 @@ function sociallinks_simplenews_form($form_state) {
       '#type' => 'value',
       '#value' => 'subscribe'
     );
-    $form['submit'] = array(
+    $form['subscribe'] = array(
       '#type' => 'submit',
-      '#value' => t('Submit'),
+      '#value' => t('Subscribe'),
+      '#attributes' => array('class' => 'ctools-use-ajax')
+    );
+    $form['unsubscribe'] = array(
+      '#type' => 'submit',
+      '#value' => t('Unsubscribe'),
       '#attributes' => array('class' => 'ctools-use-ajax')
     );
     $form['#action'] = url('sociallinks/nojs/simplenews', array('query' => drupal_get_destination()));
@@ -93,7 +97,8 @@ function sociallinks_simplenews_form_validate($form, &$form_state) {
   }
   $tids = array_filter($form_state['values']['tids']);
   if (empty($tids)) {
-    form_set_error('tids', t('Select a newsletter to subscribe to.'));
+    $action = ($form_state['clicked_button']['#value'] == t('Subscribe')) ? t('subscribe') : t('unsubscribe');
+    form_set_error('tids', t('Select a newsletter to @action to.', array('@action' => $action)));
   }
 }
 
@@ -101,27 +106,43 @@ function sociallinks_simplenews_form_submit($form, &$form_state) {
   global $user;
 
   $account = _simplenews_user_load($form_state['values']['mail']);
+  $action = ($form_state['clicked_button']['#value'] == t('Subscribe')) ? 'subscribe' : 'unsubscribe';
 
   // If email belongs to the current registered user, don't send confirmation.
   $confirm = $account->uid && $account->uid == $user->uid ? FALSE : TRUE;
 
-  foreach ($form_state['values']['tids'] as $tid) {
-    if (!simplenews_user_is_subscribed($account->mail, $tid)) {
-      simplenews_subscribe_user($form_state['values']['mail'], $tid, $confirm);
-      $message = TRUE;
-    }
-    else {
-      $newsletter = taxonomy_get_term($tid);
-      drupal_set_message(t('The email %mail is already subscribed to %newsletter.', array('%mail' => $account->mail, '%newsletter' => $newsletter->name)), 'warning');
-    }
+  switch ($action) {
+    case 'subscribe':
+      foreach ($form_state['values']['tids'] as $tid) {
+        if (!simplenews_user_is_subscribed($account->mail, $tid)) {
+          simplenews_subscribe_user($form_state['values']['mail'], $tid, $confirm);
+          if (!isset($message)) {
+            $message = ($confirm) ? t('You will receive a confirmation email shortly containing further instructions on how to complete your subscription.') : t('You have been subscribed.');
+          }
+        }
+        else {
+          $newsletter = taxonomy_get_term($tid);
+          drupal_set_message(t('The email %mail is already subscribed to %newsletter.', array('%mail' => $account->mail, '%newsletter' => $newsletter->name)), 'warning');
+        }
+      }
+      break;
+    case 'unsubscribe':
+      foreach ($form_state['values']['tids'] as $tid) {
+        if (simplenews_user_is_subscribed($account->mail, $tid)) {
+          simplenews_unsubscribe_user($form_state['values']['mail'], $tid, $confirm);
+          if (!isset($message)) {
+            $message = ($confirm) ? t('You will receive a confirmation email shortly containing further instructions on how to complete the unsubscription process.') : t('You have been unsubscribed.');
+          }
+        }
+        else {
+          $newsletter = taxonomy_get_term($tid);
+          drupal_set_message(t('The email %mail is already unsubscribed to %newsletter.', array('%mail' => $account->mail, '%newsletter' => $newsletter->name)), 'warning');
+        }
+      }
+      break;
   }
 
   if ($message) {
-    if ($confirm) {
-      drupal_set_message(t('You will receive a confirmation email shortly containing further instructions on how to complete your subscription.'));
-    }
-    else {
-      drupal_set_message(t('You have been subscribed.'));
-    }
+    drupal_set_message($message);
   }
 }
