@@ -7,6 +7,9 @@
  * of social media links like Facebook, Twitter, Simplenews subscription, etc.
  */
 
+define('SOCIALLINKS_VERTICAL', 1);
+define('SOCIALLINKS_HORIZONTAL', 2);
+
 /*******************************************************************************
  * Hook Functions (Drupal)
  ******************************************************************************/
@@ -31,6 +34,14 @@ function sociallinks_block($op = 'list', $delta = 0, $edit = array()) {
       return $blocks;
     case 'configure':
       if ($delta == 0) {
+        $form['sociiallinks_style'] = array(
+          '#type' => 'select',
+          '#title' => t('Tabs style'),
+          '#description' => t('Determine if the Social Links tabs should be displayed horizontally or vertically.'),
+          '#default_value' => variable_get('sociallinks_style', SOCIALLINKS_VERTICAL),
+          '#options' => array(SOCIALLINKS_VERTICAL => t('Vertical'), SOCIALLINKS_HORIZONTAL => t('Horizontal')),
+          '#required' => TRUE
+        );
         sociallinks_include_files();
         $tabs = sociallinks_fetch_tabs(FALSE, TRUE);
         $form['sociallinks_tabs'] = array('#tree' => TRUE);
@@ -89,6 +100,7 @@ function sociallinks_block($op = 'list', $delta = 0, $edit = array()) {
           $settings[$id]['weight'] = $tab['weight'];
         }
         variable_set('sociallinks_global_tab_settings', $settings);
+        variable_set('sociallinks_style', $edit['sociallinks_style']);
         cache_clear_all('sociallinks:tabs', 'cache');
       }
       break;
@@ -301,7 +313,19 @@ function sociallinks_tab_sort($a, $b) {
 function template_preprocess_sociallinks_block(&$vars) {
   jquery_ui_add('ui.tabs');
   drupal_add_js(drupal_get_path('module', 'sociallinks') .'/sociallinks.js');
-  drupal_add_css(drupal_get_path('module', 'sociallinks') .'/sociallinks.css');
+  drupal_add_css(drupal_get_path('module', 'sociallinks') .'/css/sociallinks.css');
+
+  $style = (variable_get('sociallinks_style', SOCIALLINKS_VERTICAL) == SOCIALLINKS_VERTICAL) ? 'vertical' : 'horizontal';
+  drupal_add_css(drupal_get_path('module', 'sociallinks') .'/css/'. $style .'.css');
+
+  switch (variable_get('sociallinks_style', SOCIALLINKS_VERTICAL)) {
+    case SOCIALLINKS_VERTICAL:
+      drupal_add_css(drupal_get_path('module', 'sociallinks') .'/sociallinks.css');
+      break;
+    case SOCIALLINKS_HORIZONTAL:
+      drupal_add_css(drupal_get_path('module', 'sociallinks') .'/sociallinks.css');
+      break;
+  }
 
   list($vars['tabs'], $vars['content']) = sociallinks_get_output();
 }
