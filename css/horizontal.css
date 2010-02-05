@@ -20,4 +20,8 @@ ul.sociallinks-tabs li {
   
 }
 
+ul.sociallinks-tabs li.ui-tabs-selected {
+  border-bottom: 2px solid #000;
+}
+
 
