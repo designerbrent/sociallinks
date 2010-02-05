@@ -318,15 +318,6 @@ function template_preprocess_sociallinks_block(&$vars) {
   $style = (variable_get('sociallinks_style', SOCIALLINKS_VERTICAL) == SOCIALLINKS_VERTICAL) ? 'vertical' : 'horizontal';
   drupal_add_css(drupal_get_path('module', 'sociallinks') .'/css/'. $style .'.css');
 
-  switch (variable_get('sociallinks_style', SOCIALLINKS_VERTICAL)) {
-    case SOCIALLINKS_VERTICAL:
-      drupal_add_css(drupal_get_path('module', 'sociallinks') .'/sociallinks.css');
-      break;
-    case SOCIALLINKS_HORIZONTAL:
-      drupal_add_css(drupal_get_path('module', 'sociallinks') .'/sociallinks.css');
-      break;
-  }
-
   list($vars['tabs'], $vars['content']) = sociallinks_get_output();
 }
 
