@@ -34,7 +34,7 @@ function sociallinks_block($op = 'list', $delta = 0, $edit = array()) {
       return $blocks;
     case 'configure':
       if ($delta == 0) {
-        $form['sociiallinks_style'] = array(
+        $form['sociallinks_style'] = array(
           '#type' => 'select',
           '#title' => t('Tabs style'),
           '#description' => t('Determine if the Social Links tabs should be displayed horizontally or vertically.'),
