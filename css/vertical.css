@@ -5,9 +5,9 @@ ul.sociallinks-tabs {
   float: right;
   clear: both;
   padding: 0;
-  height: 100%;
   border-left: 1px solid #a9a9a9;
   margin: 0 !important;
+  width: 80px;
 }
 
 ul.sociallinks-tabs li {
@@ -29,8 +29,7 @@ ul.sociallinks-tabs li a {
 }
 
 div.sociallinks-content {
-  padding-right: 0;
-  overflow: auto;
+  padding-right: 80px;
 }
 
 
