@@ -277,7 +277,7 @@ function sociallinks_get_output() {
       }
       $function = $tab['content callback'];
       if (function_exists($function)) {
-        $output .= '<div class="link">'. $function() .'</div>';
+        $output .= '<div class="link icon">'. $function() .'</div>';
       }
     }
     $tabs[] = array(
