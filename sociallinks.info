@@ -1,4 +1,4 @@
-; $Id$
+; $Id: sociallinks.info,v 1.1 2010/02/10 23:43:47 greenskin Exp $
 name = Social Links
 description = Add a customizable block with multiple tabs to share your social links. (Facebook, Twitter, Simplenews, et. al.)
 core = 6.x

@@ -1,4 +1,4 @@
-; $Id$
+; $Id: sociallinks_simplenews.info,v 1.1 2010/02/10 23:43:47 greenskin Exp $
 name = Simplenews Subscribe
 description = Tab for Social Links to subscribe to a Simplenews newsletter.
 core = 6.x

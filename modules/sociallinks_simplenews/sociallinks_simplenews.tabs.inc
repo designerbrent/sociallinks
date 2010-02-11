@@ -1,5 +1,5 @@
 <?php
-// $Id$
+// $Id: sociallinks_simplenews.tabs.inc,v 1.1 2010/02/10 23:43:47 greenskin Exp $
 
 /*******************************************************************************
  * Social Link Email tab

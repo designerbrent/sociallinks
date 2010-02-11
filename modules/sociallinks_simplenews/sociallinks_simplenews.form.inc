@@ -1,5 +1,5 @@
 <?php
-// $Id$
+// $Id: sociallinks_simplenews.form.inc,v 1.1 2010/02/10 23:43:47 greenskin Exp $
 
 /*******************************************************************************
  * Callback Functions, Forms, and Tables
