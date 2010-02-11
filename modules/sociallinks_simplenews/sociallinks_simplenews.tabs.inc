@@ -8,19 +8,17 @@
 function sociallinks_simplenews_configure() {
   $form = array();
   $tree = taxonomy_get_tree(variable_get('simplenews_vid', ''));
-  if (!empty($tree)) {
-    $options = array();
-    foreach ($tree as $newsletter) {
-      $options[$newsletter->tid] = $newsletter->name;
-    }
-    $form['newsletters'] = array(
-      '#type' => 'checkboxes',
-      '#title' => t('Newsletters'),
-      '#description' => t('Select newsletters users can subscribe to. At least one newsletter needs to be selected for the tab to be enabled.'),
-      '#default_value' => variable_get('sociallinks_simplenews_newsletters', array()),
-      '#options' => $options
-    );
+  $options = array();
+  foreach ($tree as $newsletter) {
+    $options[$newsletter->tid] = $newsletter->name;
   }
+  $form['newsletters'] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('Newsletters'),
+    '#description' => t('Select newsletters users can subscribe to. At least one newsletter needs to be selected for the tab to be enabled.'),
+    '#default_value' => variable_get('sociallinks_simplenews_newsletters', array()),
+    '#options' => $options
+  );
   return $form;
 }
 
