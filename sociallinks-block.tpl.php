@@ -1,4 +1,4 @@
-<div id="sociallinks">
+<div id="sociallinks" class="<?php print $button_action ?>">
   <ul class="sociallinks-tabs clear-block">
     <?php print drupal_render($tabs); ?>
   </ul>
