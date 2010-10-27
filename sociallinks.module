@@ -323,6 +323,27 @@ function sociallinks_tab_sort($a, $b) {
   return ($a_weight < $b_weight) ? -1 : 1;
 }
 
+function sociallinks_facebook_get_links(){
+  $output['url'] = variable_get('sociallinks_facebook_url', '');
+  $output['title'] = variable_get('sociallinks_facebook_title', '');
+  
+  return $output;
+}
+
+function sociallinks_rss_get_links(){
+  $output['url'] = variable_get('sociallinks_rss_url', '');
+  $output['title'] = variable_get('sociallinks_rss_title', '');
+
+  return $output;
+}
+
+function sociallinks_twitter_get_links(){
+  $output['url'] = 'http://twitter.com/'. variable_get('sociallinks_twitter_username', '');
+  $output['title'] = variable_get('sociallinks_twitter_username', '');
+  
+  return $output;
+}
+
 /*******************************************************************************
  * Theme Functions
  ******************************************************************************/
@@ -340,8 +361,23 @@ function template_preprocess_sociallinks_block(&$vars) {
 }
 
 function theme_sociallinks_tab($tab) {
+  $button_action = variable_get('sociallinks_button_action',SOCIALLINKS_HOVER);
+ 
   $title = (!empty($tab['settings']['title'])) ? $tab['settings']['title'] : $tab['title'];
-  return '<li><a href="#sociallinks-tab-'. str_replace('_', '-', $tab['id']) .'"><span>'. $title .'</span></a></li>';
+ 
+  if ($button_action == SOCIALLINKS_HOVER || $tab['id'] != 'simplenews') {
+     if ($tab['id'] != 'simplenews') {
+       $func = 'sociallinks_'. $tab['id'] .'_get_links';
+       if (function_exists($func)) {
+         $links = $func();
+       }
+     }
+     // dpm($tab['id']);
+     $output = '<li class="' . $tab['id'] . '"><a href="' . $links['url'] . '" class="button"><span>'. $title .'</span></a></li>';
+   } else {
+    $output = '<li class="' . $tab['id'] . '"><a href="#sociallinks-tab-'. str_replace('_', '-', $tab['id']) .'" class="button"><span>'. $title .'</span></a></li>';
+  }
+  return $output;
 }
 
 function theme_sociallinks_content($tab, $output) {
