@@ -161,7 +161,12 @@ function sociallinks_sociallinks_tabs() {
       'title' => 'Twitter',
       'file' => 'sociallinks.tabs.inc',
       'configure callback' => 'sociallinks_twitter_configure'
-    )
+    ),
+    'rss' => array(
+      'title' => 'RSS',
+      'file' => 'sociallinks.tabs.inc',
+      'configure callback' => 'sociallinks_rss_configure'
+    ),
   );
 }
 
