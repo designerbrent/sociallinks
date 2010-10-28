@@ -46,8 +46,8 @@ function sociallinks_block($op = 'list', $delta = 0, $edit = array()) {
           '#required' => TRUE
         );
         $form['sociallinks_button_action'] = array(
-          '#type' => 'radios',
-          '#title' => t('Hover or Click'),
+          '#type' => 'select',
+          '#title' => t('Tab event'),
           '#description' => t('When switching to a new tab, should a "Click" or "Hover" action be used.'),
           '#default_value' => variable_get('sociallinks_button_action', SOCIALLINKS_HOVER),
           '#options' => array(SOCIALLINKS_HOVER => t('Hover'), SOCIALLINKS_CLICK => t('Click')),
@@ -355,8 +355,8 @@ function template_preprocess_sociallinks_block(&$vars) {
 
   $style = (variable_get('sociallinks_style', SOCIALLINKS_VERTICAL) == SOCIALLINKS_VERTICAL) ? 'vertical' : 'horizontal';
   drupal_add_css(drupal_get_path('module', 'sociallinks') .'/css/'. $style .'.css');
-  $vars['button_action'] = (variable_get('sociallinks_button_action',SOCIALLINKS_HOVER) == SOCIALLINKS_HOVER) ? 'button_hover' : 'button_click';
 
+  $vars['button_action'] = (variable_get('sociallinks_button_action',SOCIALLINKS_HOVER) == SOCIALLINKS_HOVER) ? 'button_hover' : 'button_click';
   list($vars['tabs'], $vars['content']) = sociallinks_get_output();
 }
 
