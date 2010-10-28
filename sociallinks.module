@@ -370,9 +370,9 @@ function theme_sociallinks_tab($tab) {
         $url = url($tab['settings']['url']);
         break;
     }
-    $output = '<li id="tab-'. $tab['number'] .'" class="' . $tab['id'] . ' tab'. ($tab['number'] == 1 ? ' active' : '') .'"><a href="' . $url . '"><span>'. $url_title .'</span></a></li>';
+    $output = '<li id="tab-'. $tab['number'] .'" class="' . $tab['id'] . ' tab'. ($tab['number'] == 1 ? ' active' : '') .'"><a href="' . $url . '" class="button"><span>'. $url_title .'</span></a></li>';
   } else {
-    $output = '<li id="tab-'. $tab['number'] .'" class="' . $tab['id'] . ' tab'. ($tab['number'] == 1 ? ' active' : '') .'"><a href="#sociallinks-tab-'. str_replace('_', '-', $tab['id']) .'"><span>'. $title .'</span></a></li>';
+    $output = '<li id="tab-'. $tab['number'] .'" class="' . $tab['id'] . ' tab'. ($tab['number'] == 1 ? ' active' : '') .'"><a href="#sociallinks-tab-'. str_replace('_', '-', $tab['id']) .'" class="button"><span>'. $title .'</span></a></li>';
   }
 
   return $output;
