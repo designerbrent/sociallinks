@@ -280,7 +280,7 @@ function sociallinks_include($file, $path) {
     if (isset($file) && file_exists('./'. $path .'/'. $file)) {
       require_once './' . $path .'/'. $file;
     }
-    $included[$id] = TRUE;
+    $included[$file] = TRUE;
   }
 }
 
