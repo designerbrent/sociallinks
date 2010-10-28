@@ -1,7 +1,6 @@
 <?php
 // $Id: sociallinks.tabs.inc,v 1.1 2010/02/10 23:43:47 greenskin Exp $
 
-$interface = variable_get('sociallinks_button_action','hover');
 /*******************************************************************************
  * Social Link Facebook tab
  ******************************************************************************/
@@ -29,7 +28,7 @@ function sociallinks_facebook_save($edit) {
 }
 
 function sociallinks_facebook_content() {
-  if ($interface == 'click') {
+  if (variable_get('sociallinks_button_action','hover') == 'click') {
     $url = variable_get('sociallinks_facebook_url', '');
     $url_title = variable_get('sociallinks_facebook_url_title', '');
     return (!empty($url)) ? l($url_title, $url, array('attributes' => array('target' => '_blank', 'class' => 'facebook'))) : '';
@@ -55,7 +54,7 @@ function sociallinks_twitter_save($edit) {
 }
 
 function sociallinks_twitter_content() {
-  if ($interface == 'click') {
+  if (variable_get('sociallinks_button_action','hover') == 'click') {
     $username = variable_get('sociallinks_twitter_username', '');
     return l(t('@@username', array('@username' => $username)), 'http://www.twitter.com/'. $username, array('attributes' => array('target' => '_blank', 'class' => 'twitter')));
   }
@@ -90,7 +89,7 @@ function sociallinks_rss_save($edit) {
 }
 
 function sociallinks_rss_content() {
-  if ($interface == 'click') {
+  if (variable_get('sociallinks_button_action','hover') == 'click') {
     $rss_url = variable_get('sociallinks_rss_url', '');
     $rss_title = variable_get('sociallinks_rss_title', '');
     return l($rss_title, $rss_url, array('attributes' => array('target' => '_blank', 'class' => 'rss')));
