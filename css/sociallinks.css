@@ -1,9 +1,8 @@
 /* $Id: sociallinks.css,v 1.1 2010/02/10 23:43:47 greenskin Exp $ */
 
-#sociallinks .ui-tabs-hide {
-  display: none;
-}
-
 .block-sociallinks div.content {
   border-top: 1px solid #a9a9a9;
+}
+.block-sociallinks div.hide {
+  display: none;
 }

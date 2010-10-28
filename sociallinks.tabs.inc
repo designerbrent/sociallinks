@@ -14,24 +14,23 @@ function sociallinks_facebook_configure() {
   );
   $form['url_title'] = array(
     '#type' => 'textfield',
-    '#title' => t('URL Title'),
+    '#title' => t('Title'),
     '#description' => t('Enter the title for your Facebook URL'),
     '#default_value' => variable_get('sociallinks_facebook_url_title', 'Visit our Facebook Page')
   );
-  
   return $form;
 }
 
 function sociallinks_facebook_save($edit) {
-  variable_set('sociallinks_facebook_url_title', $edit['url_title']);
+  variable_set('sociallinks_facebook_url_title', $edit['title']);
   variable_set('sociallinks_facebook_url', $edit['url']);
 }
 
 function sociallinks_facebook_content() {
   if (variable_get('sociallinks_tab_event','hover') == 'click') {
     $url = variable_get('sociallinks_facebook_url', '');
-    $url_title = variable_get('sociallinks_facebook_url_title', '');
-    return (!empty($url)) ? l($url_title, $url, array('attributes' => array('target' => '_blank', 'class' => 'facebook'))) : '';
+    $title = variable_get('sociallinks_facebook_url_title', '');
+    return (!empty($url)) ? l($title, $url, array('attributes' => array('target' => '_blank', 'class' => 'facebook'))) : '';
   }
 }
 
@@ -67,7 +66,6 @@ function sociallinks_twitter_content() {
  ******************************************************************************/
 
 function sociallinks_rss_configure() {
-
   $form['rss_url'] = array(
     '#type' => 'textfield',
     '#title' => t('Feed URL'),

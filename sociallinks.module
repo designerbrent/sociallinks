@@ -170,6 +170,15 @@ function sociallinks_sociallinks_tabs() {
   );
 }
 
+function sociallinks_sociallinks_tabs_alter(&$tabs) {
+  $tabs['facebook']['settings']['url'] = variable_get('sociallinks_facebook_url', '');
+  $tabs['facebook']['settings']['url_title'] = variable_get('sociallinks_facebook_url_title', 'Visit our Facebook Page');
+  $tabs['rss']['settings']['url'] = variable_get('sociallinks_rss_url', '');
+  $tabs['rss']['settings']['url_title'] = variable_get('sociallinks_rss_title', '');
+  $tabs['simplenews']['settings']['newsletters'] = variable_get('sociallinks_simplenews_newsletters', array());
+  $tabs['twitter']['settings']['username'] = variable_get('sociallinks_twitter_username', '');
+}
+
 /*******************************************************************************
  * Callback Functions, Forms, and Tables
  ******************************************************************************/
@@ -232,7 +241,7 @@ function sociallinks_fetch_tabs($enabled = FALSE, $rebuild = FALSE) {
         $tabs += $module_tabs;
       }
 
-      drupal_alter('sociallinks_tabs_alter', $tabs);
+      drupal_alter('sociallinks_tabs', $tabs);
 
       // Apply settings
       $settings = variable_get('sociallinks_global_tab_settings', array());
@@ -240,11 +249,16 @@ function sociallinks_fetch_tabs($enabled = FALSE, $rebuild = FALSE) {
         $tabs[$id]['settings'] = array_merge($tabs[$id]['settings'], $tab);
       }
 
+      uasort($tabs, "sociallinks_tab_sort");
+
+      $count = 1;
+      foreach ($tabs as $key => $tab) {
+        $tabs[$key]['number'] = $count++;
+      }
+
       cache_set('sociallinks:tabs', $tabs);
     }
   }
-
-  uasort($tabs, "sociallinks_tab_sort");
 
   if ($enabled) {
     $enabled_tabs = array();
@@ -323,27 +337,6 @@ function sociallinks_tab_sort($a, $b) {
   return ($a_weight < $b_weight) ? -1 : 1;
 }
 
-function sociallinks_facebook_get_links() {
-  $output['url'] = variable_get('sociallinks_facebook_url', '');
-  $output['title'] = variable_get('sociallinks_facebook_title', '');
-
-  return $output;
-}
-
-function sociallinks_rss_get_links() {
-  $output['url'] = variable_get('sociallinks_rss_url', '');
-  $output['title'] = variable_get('sociallinks_rss_title', '');
-
-  return $output;
-}
-
-function sociallinks_twitter_get_links() {
-  $output['url'] = 'http://twitter.com/'. variable_get('sociallinks_twitter_username', '');
-  $output['title'] = variable_get('sociallinks_twitter_username', '');
-
-  return $output;
-}
-
 /*******************************************************************************
  * Theme Functions
  ******************************************************************************/
@@ -356,29 +349,35 @@ function template_preprocess_sociallinks_block(&$vars) {
   $style = (variable_get('sociallinks_style', SOCIALLINKS_VERTICAL) == SOCIALLINKS_VERTICAL) ? 'vertical' : 'horizontal';
   drupal_add_css(drupal_get_path('module', 'sociallinks') .'/css/'. $style .'.css');
 
-  $vars['tab_event'] = (variable_get('sociallinks_tab_event',SOCIALLINKS_HOVER) == SOCIALLINKS_HOVER) ? 'button_hover' : 'button_click';
+  drupal_add_js(array('sociallinks' => array('tabEvent' => variable_get('sociallinks_tab_event', SOCIALLINKS_HOVER))), 'setting');
+
+  $vars['tab_event'] = (variable_get('sociallinks_tab_event',SOCIALLINKS_HOVER) == SOCIALLINKS_HOVER) ? 'tab_hover' : 'tab_click';
   list($vars['tabs'], $vars['content']) = sociallinks_get_output();
 }
 
 function theme_sociallinks_tab($tab) {
-  $tab_event = variable_get('sociallinks_tab_event',SOCIALLINKS_HOVER);
-
   $title = (!empty($tab['settings']['title'])) ? $tab['settings']['title'] : $tab['title'];
 
-  if ($tab_event == SOCIALLINKS_HOVER || $tab['id'] != 'simplenews') {
-     if ($tab['id'] != 'simplenews') {
-       $func = 'sociallinks_'. $tab['id'] .'_get_links';
-       if (function_exists($func)) {
-         $links = $func();
-       }
-     }
-     $output = '<li class="' . $tab['id'] . '"><a href="' . $links['url'] . '" class="button"><span>'. $title .'</span></a></li>';
-   } else {
-    $output = '<li class="' . $tab['id'] . '"><a href="#sociallinks-tab-'. str_replace('_', '-', $tab['id']) .'" class="button"><span>'. $title .'</span></a></li>';
+  if (variable_get('sociallinks_tab_event',SOCIALLINKS_HOVER) == SOCIALLINKS_HOVER && $tab['id'] != 'simplenews') {
+    switch ($tab['id']) {
+      case 'twitter':
+        $url_title = check_plain($tab['settings']['username']);
+        $url = url('http://twitter.com/'. $tab['settings']['username']);
+        break;
+      case 'facebook':
+      case 'rss':
+        $url_title = check_plain($tab['settings']['url_title']);
+        $url = url($tab['settings']['url']);
+        break;
+    }
+    $output = '<li class="' . $tab['id'] . ' tab tab-'. $tab['number'] . ($tab['number'] == 1 ? ' active' : '') .'"><a href="' . $url . '"><span>'. $url_title .'</span></a></li>';
+  } else {
+    $output = '<li class="' . $tab['id'] . ' tab tab-'. $tab['number'] . ($tab['number'] == 1 ? ' active' : '') .'"><a href="#sociallinks-tab-'. str_replace('_', '-', $tab['id']) .'"><span>'. $title .'</span></a></li>';
   }
+
   return $output;
 }
 
 function theme_sociallinks_content($tab, $output) {
-  return '<div id="sociallinks-tab-'. str_replace('_', '-', $tab['id']) .'" class="sociallinks-content">'. $output .'</div>';
+  return '<div id="sociallinks-tab-'. str_replace('_', '-', $tab['id']) .'" class="sociallinks-content tab-content tab-'. $tab['number'] . ($tab['number'] != 1 ? ' hide' : '') .'">'. $output .'</div>';
 }
