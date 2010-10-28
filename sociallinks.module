@@ -45,11 +45,11 @@ function sociallinks_block($op = 'list', $delta = 0, $edit = array()) {
           '#options' => array(SOCIALLINKS_VERTICAL => t('Vertical'), SOCIALLINKS_HORIZONTAL => t('Horizontal')),
           '#required' => TRUE
         );
-        $form['sociallinks_button_action'] = array(
+        $form['sociallinks_tab_event'] = array(
           '#type' => 'select',
           '#title' => t('Tab event'),
           '#description' => t('When switching to a new tab, should a "Click" or "Hover" action be used.'),
-          '#default_value' => variable_get('sociallinks_button_action', SOCIALLINKS_HOVER),
+          '#default_value' => variable_get('sociallinks_tab_event', SOCIALLINKS_HOVER),
           '#options' => array(SOCIALLINKS_HOVER => t('Hover'), SOCIALLINKS_CLICK => t('Click')),
           '#required' => TRUE
         );
@@ -112,7 +112,7 @@ function sociallinks_block($op = 'list', $delta = 0, $edit = array()) {
         }
         variable_set('sociallinks_global_tab_settings', $settings);
         variable_set('sociallinks_style', $edit['sociallinks_style']);
-        variable_set('sociallinks_button_action', $edit['sociallinks_button_action']);
+        variable_set('sociallinks_tab_event', $edit['sociallinks_tab_event']);
         cache_clear_all('sociallinks:tabs', 'cache');
       }
       break;
@@ -356,16 +356,16 @@ function template_preprocess_sociallinks_block(&$vars) {
   $style = (variable_get('sociallinks_style', SOCIALLINKS_VERTICAL) == SOCIALLINKS_VERTICAL) ? 'vertical' : 'horizontal';
   drupal_add_css(drupal_get_path('module', 'sociallinks') .'/css/'. $style .'.css');
 
-  $vars['button_action'] = (variable_get('sociallinks_button_action',SOCIALLINKS_HOVER) == SOCIALLINKS_HOVER) ? 'button_hover' : 'button_click';
+  $vars['tab_event'] = (variable_get('sociallinks_tab_event',SOCIALLINKS_HOVER) == SOCIALLINKS_HOVER) ? 'button_hover' : 'button_click';
   list($vars['tabs'], $vars['content']) = sociallinks_get_output();
 }
 
 function theme_sociallinks_tab($tab) {
-  $button_action = variable_get('sociallinks_button_action',SOCIALLINKS_HOVER);
+  $tab_event = variable_get('sociallinks_tab_event',SOCIALLINKS_HOVER);
 
   $title = (!empty($tab['settings']['title'])) ? $tab['settings']['title'] : $tab['title'];
 
-  if ($button_action == SOCIALLINKS_HOVER || $tab['id'] != 'simplenews') {
+  if ($tab_event == SOCIALLINKS_HOVER || $tab['id'] != 'simplenews') {
      if ($tab['id'] != 'simplenews') {
        $func = 'sociallinks_'. $tab['id'] .'_get_links';
        if (function_exists($func)) {
