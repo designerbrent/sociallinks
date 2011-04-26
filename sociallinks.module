@@ -337,6 +337,26 @@ function sociallinks_tab_sort($a, $b) {
   return ($a_weight < $b_weight) ? -1 : 1;
 }
 
+/**
+ * Load a user or creates a dummy anonymous user.
+ *
+ * @return account
+ *   object (
+ *     mail,   email address
+ *     uid,    uid or 0 for anonymous
+ *   )
+ */
+function _sociallinks_user_load($mail) {
+  $account = user_load(array('mail' => $mail));
+  if ($account === FALSE) {
+    // Construct anonymous user since we don't have a user that matches that e-amil.
+    $account = new stdClass();
+    $account->uid = 0;
+    $account->mail = drupal_strtolower($mail);
+  }
+  return $account;
+}
+
 /*******************************************************************************
  * Theme Functions
  ******************************************************************************/
@@ -358,7 +378,7 @@ function template_preprocess_sociallinks_block(&$vars) {
 function theme_sociallinks_tab($tab) {
   $title = (!empty($tab['settings']['title'])) ? $tab['settings']['title'] : $tab['title'];
 
-  if (variable_get('sociallinks_tab_event',SOCIALLINKS_HOVER) == SOCIALLINKS_HOVER && $tab['id'] != 'simplenews') {
+  if (variable_get('sociallinks_tab_event', SOCIALLINKS_HOVER) == SOCIALLINKS_HOVER && !in_array($tab['id'], array('simplenews', 'mailchimp'))) {
     switch ($tab['id']) {
       case 'twitter':
         $url_title = check_plain($tab['settings']['username']);

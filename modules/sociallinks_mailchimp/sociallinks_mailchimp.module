@@ -1,0 +1,39 @@
+<?php
+
+/*******************************************************************************
+ * Hook Functions (Drupal)
+ ******************************************************************************/
+
+/**
+ * Implementation of hook_menu().
+ */
+function sociallinks_mailchimp_menu() {
+  $items['sociallinks/%ctools_js/mailchimp'] = array(
+    'page callback' => 'sociallinks_mailchimp_ajax',
+    'page arguments' => array(1),
+    'access arguments' => array('access social links'),
+    'type' => MENU_CALLBACK,
+    'file' => 'sociallinks_mailchimp.form.inc'
+  );
+  return $items;
+}
+
+/*******************************************************************************
+ * Hook Functions (Social Links)
+ ******************************************************************************/
+
+function sociallinks_mailchimp_sociallinks_tabs() {
+  return array(
+    'mailchimp' => array(
+      'title' => 'MailChimp',
+      'file' => 'sociallinks_mailchimp.tabs.inc',
+      'configure callback' => 'sociallinks_mailchimp_configure',
+      'save callback' => 'sociallinks_mailchimp_save',
+      'content callback' => 'sociallinks_mailchimp_content'
+    )
+  );
+}
+
+function sociallinks_mailchimp_tabs_alter(&$tabs) {
+  $tabs['simplenews']['settings']['lists'] = variable_get('sociallinks_mailchimp_lists', array());
+}

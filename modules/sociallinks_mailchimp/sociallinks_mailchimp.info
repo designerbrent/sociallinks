@@ -1,0 +1,7 @@
+name = MailChimp Subscribe
+description = Tab for Social Links to subscribe to a MailChimp list.
+core = 6.x
+dependencies[] = sociallinks
+dependencies[] = mailchimp
+dependencies[] = ctools
+package = Social Links
