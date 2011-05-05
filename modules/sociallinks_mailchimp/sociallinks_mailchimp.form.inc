@@ -108,7 +108,7 @@ function sociallinks_mailchimp_form_submit($form, &$form_state) {
     $action = ($form_state['clicked_button']['#value'] == t('Subscribe')) ? 'subscribe' : 'unsubscribe';
 
     // If email belongs to the current registered user, don't send confirmation.
-    $confirm = $account->uid && $account->uid == $user->uid ? FALSE : TRUE;
+    $confirm = FALSE;
 
     switch ($action) {
       case 'subscribe':
