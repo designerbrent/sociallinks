@@ -175,7 +175,9 @@ function sociallinks_sociallinks_tabs_alter(&$tabs) {
   $tabs['facebook']['settings']['url_title'] = variable_get('sociallinks_facebook_url_title', 'Visit our Facebook Page');
   $tabs['rss']['settings']['url'] = variable_get('sociallinks_rss_url', '');
   $tabs['rss']['settings']['url_title'] = variable_get('sociallinks_rss_title', '');
-  $tabs['simplenews']['settings']['newsletters'] = variable_get('sociallinks_simplenews_newsletters', array());
+  if (module_exists('sociallinks_simplenews')) {
+    $tabs['simplenews']['settings']['newsletters'] = variable_get('sociallinks_simplenews_newsletters', array());
+  }
   $tabs['twitter']['settings']['username'] = variable_get('sociallinks_twitter_username', '');
 }
 
@@ -246,7 +248,9 @@ function sociallinks_fetch_tabs($enabled = FALSE, $rebuild = FALSE) {
       // Apply settings
       $settings = variable_get('sociallinks_global_tab_settings', array());
       foreach ($settings as $id => $tab) {
-        $tabs[$id]['settings'] = array_merge($tabs[$id]['settings'], $tab);
+        if (isset($tabs[$id])) {
+          $tabs[$id]['settings'] = array_merge($tabs[$id]['settings'], $tab);
+        }
       }
 
       uasort($tabs, "sociallinks_tab_sort");
