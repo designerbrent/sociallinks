@@ -262,9 +262,12 @@ function sociallinks_fetch_tabs($enabled = FALSE, $rebuild = FALSE) {
 
   if ($enabled) {
     $enabled_tabs = array();
+    $count = 1;
     foreach ($tabs as $tab) {
       if ($tab['settings']['enabled'] && module_exists($tab['module'])) {
+        $tab['number'] = $count;
         $enabled_tabs[] = $tab;
+        $count++;
       }
     }
     return $enabled_tabs;
